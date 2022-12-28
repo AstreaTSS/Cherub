@@ -251,10 +251,7 @@ class OwnerCMDs(utils.Extension):
         if ctx and hasattr(ctx, "message") and hasattr(ctx.message, "jump_url"):
             final_chunks.insert(0, f"Error on: {ctx.message.jump_url}")
 
-        to_send = final_chunks
-        split = False
-
-        await utils.msg_to_owner(self.bot, to_send, split)
+        await utils.msg_to_owner(self.bot, final_chunks)
 
         if isinstance(ctx, naff.PrefixedContext):
             await ctx.reply("An error occured. Please check your DMs.")
