@@ -4,7 +4,7 @@ import re
 import naff
 import tansy
 
-import common.image_utils as image_utils
+import common.emoji_utils as emoji_utils
 import common.utils as utils
 
 DISCORD_EMOJI_REGEX = re.compile(r"<(a?):([a-zA-Z0-9\_]{1,32}):([0-9]{15,20})>")
@@ -24,10 +24,10 @@ class GetEmojis(utils.Extension):
         emoji: naff.PartialEmoji = tansy.Option(
             "The emoji to get the URL of.",
             type=str,
-            converter=image_utils.WrappedPartialEmojiConverter,
+            converter=emoji_utils.WrappedPartialEmojiConverter,
         ),
     ):
-        await ctx.send(f"URL: {image_utils.get_emoji_url(emoji)}", ephemeral=True)
+        await ctx.send(f"URL: {emoji_utils.get_emoji_url(emoji)}", ephemeral=True)
 
     @naff.context_menu("Get Emoji URLs", naff.CommandTypes.MESSAGE)  # type: ignore
     async def get_emoji_urls(self, ctx: utils.CherubInteractionContext) -> None:
@@ -46,7 +46,7 @@ class GetEmojis(utils.Extension):
                     id=emoji_id, name=emoji_name, animated=emoji_animated
                 )
 
-                emoji_urls.append(image_utils.get_emoji_url(emoji))
+                emoji_urls.append(emoji_utils.get_emoji_url(emoji))
 
             # removes dups while preserving order
             emoji_urls_str = "\n".join(dict.fromkeys(emoji_urls))
@@ -57,5 +57,5 @@ class GetEmojis(utils.Extension):
 
 def setup(bot):
     importlib.reload(utils)
-    importlib.reload(image_utils)
+    importlib.reload(emoji_utils)
     GetEmojis(bot)

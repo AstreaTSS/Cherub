@@ -150,6 +150,17 @@ class CustomCheckFailure(naff.errors.BadArgument):
     pass
 
 
+def bot_can_upload_emoji() -> typing.Any:
+    async def predicate(ctx: GuildInteractionContext):
+        bot_perms: naff.Permissions = ctx.channel.permissions_for(ctx.guild.me)  # type: ignore
+        if naff.Permissions.MANAGE_EMOJIS_AND_STICKERS not in bot_perms:
+            raise CustomCheckFailure("The bot can't upload emojis on this server.")
+
+        return True
+
+    return naff.check(predicate)  # type: ignore
+
+
 async def _global_checks(ctx: CherubContext):
     return ctx.bot.fully_ready.is_set()
 
