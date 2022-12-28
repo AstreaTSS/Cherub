@@ -22,7 +22,7 @@ class GetEmojis(utils.Extension):
         emoji: naff.PartialEmoji = tansy.Option(
             "The emoji to get the URL of.",
             type=str,
-            converter=emoji_utils.WrappedPartialEmojiConverter,
+            converter=emoji_utils.CustomPartialEmojiConverter,
         ),
     ):
         await ctx.send(f"URL: {emoji_utils.get_emoji_url(emoji)}", ephemeral=True)
@@ -37,9 +37,9 @@ class GetEmojis(utils.Extension):
             emoji_urls: list[str] = []
 
             for match in matches:
-                emoji_animated = bool(match.group(1))
-                emoji_name = match.group(2)
-                emoji_id = int(match.group(3))
+                emoji_animated = bool(match[0])
+                emoji_name = match[1]
+                emoji_id = int(match[2])
                 emoji = naff.PartialEmoji(
                     id=emoji_id, name=emoji_name, animated=emoji_animated
                 )

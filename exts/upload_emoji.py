@@ -46,13 +46,24 @@ class UploadEmoji(utils.Extension):
 
         await ctx.defer()
 
+        emoji_id = None
         emoji_url = None
         emoji_ext = None
         emoji_name = name
 
         if emoji:
             try:
-                partial_emoji = await naff.PartialEmojiConverter().convert(ctx, emoji)
+                if isinstance(emoji, naff.PartialEmoji):
+                    # happens with commands using the direct callback
+                    partial_emoji = emoji
+                else:
+                    partial_emoji = (
+                        await emoji_utils.CustomPartialEmojiConverter.convert(
+                            ctx, emoji
+                        )
+                    )
+
+                emoji_id = int(partial_emoji.id)  # type: ignore
                 emoji_url = emoji_utils.get_emoji_url(partial_emoji)
                 emoji_ext = "gif" if partial_emoji.animated else "png"
                 emoji_name = emoji_name or partial_emoji.name
@@ -83,15 +94,15 @@ class UploadEmoji(utils.Extension):
             # no idea how this would happen
             raise naff.errors.BadArgument("Invalid argument passed.")
 
-        guild_emojis: list[naff.CustomEmoji] = [
-            e
-            for e in ctx.bot.cache.emoji_cache.values()
-            if int(e._guild_id) == int(ctx.guild_id)
-        ]
+        guild_emojis = await ctx.guild.fetch_all_custom_emojis()
 
-        if next((e for e in guild_emojis if e.name == emoji_name), None):
+        if emoji_id:
+            if await ctx.guild.fetch_custom_emoji(emoji_id):
+                raise utils.CustomCheckFailure("This emoji is already on this server.")
+
+        elif next((e for e in guild_emojis if e.name == emoji_name), None):
             raise utils.CustomCheckFailure(
-                f'There is already an emoji named "{emoji_name}".'
+                f"There is already an emoji named `{emoji_name}`."
             )
 
         animated = False
@@ -139,7 +150,7 @@ class UploadEmoji(utils.Extension):
             uploaded_emoji = await ctx.guild.create_custom_emoji(
                 name=emoji_name,
                 imagefile=emoji_data,
-                reason=f"Created by {str(ctx.author)}",
+                reason=f"Created by {str(ctx.author)}.",
             )
         except naff.errors.HTTPException as e:
             raise utils.CustomCheckFailure(
@@ -175,7 +186,7 @@ class UploadEmoji(utils.Extension):
         emoji: naff.PartialEmoji = tansy.Option(
             "The emoji to clone.",
             type=str,
-            converter=emoji_utils.WrappedPartialEmojiConverter,
+            converter=emoji_utils.CustomPartialEmojiConverter,
         ),
     ):
         await self.add_emoji.call_with_binding(
@@ -192,9 +203,9 @@ class UploadEmoji(utils.Extension):
         message: naff.Message = ctx.target  # type: ignore
 
         if match := emoji_utils.DISCORD_EMOJI_REGEX.search(message.content):
-            emoji_animated = bool(match.group(1))
-            emoji_name = match.group(2)
-            emoji_id = int(match.group(3))
+            emoji_animated = bool(match[1])
+            emoji_name = match[2]
+            emoji_id = int(match[3])
             emoji = naff.PartialEmoji(
                 id=emoji_id, name=emoji_name, animated=emoji_animated
             )

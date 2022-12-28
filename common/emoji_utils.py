@@ -6,7 +6,7 @@ import aiohttp
 import humanize
 import naff
 
-DISCORD_EMOJI_REGEX = re.compile(r"<(a?):([a-zA-Z0-9\_]{1,32}):([0-9]{15,20})>")
+DISCORD_EMOJI_REGEX = re.compile(r"<(a?):([a-zA-Z0-9\_]{1,32}):([0-9]{15,})>")
 IMAGE_EXTS = {"jpg", "jpeg", "png", "gif", "webp"}
 
 
@@ -104,14 +104,21 @@ async def get_file_with_limit(url: str, limit: int, *, equal_to: bool = True):
                 return e.partial
 
 
-class WrappedPartialEmojiConverter(naff.PartialEmojiConverter):
-    async def convert(self, ctx: naff.Context, argument: str) -> naff.PartialEmoji:
-        try:
-            return await super().convert(ctx, argument)
-        except naff.errors.BadArgument as e:
-            raise naff.errors.BadArgument(
-                str(e).replace("PartialEmoji", "a Discord emoji")
-            ) from None
+class CustomPartialEmojiConverter(naff.Converter[naff.PartialEmoji]):
+    @staticmethod
+    async def convert(ctx: naff.Context, argument: str) -> naff.PartialEmoji:
+        if match := DISCORD_EMOJI_REGEX.match(argument):
+            emoji_animated = bool(match[1])
+            emoji_name = match[2]
+            emoji_id = int(match[3])
+
+            return naff.PartialEmoji(
+                id=emoji_id, name=emoji_name, animated=emoji_animated
+            )
+
+        raise naff.errors.BadArgument(
+            f'Couldn\'t convert "{argument}" to a Discord emoji.'
+        )
 
 
 def get_emoji_url(emoji: naff.PartialEmoji):
