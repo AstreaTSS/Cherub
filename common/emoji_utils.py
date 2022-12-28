@@ -1,10 +1,12 @@
 import asyncio
+import re
 import typing
 
 import aiohttp
 import humanize
 import naff
 
+DISCORD_EMOJI_REGEX = re.compile(r"<(a?):([a-zA-Z0-9\_]{1,32}):([0-9]{15,20})>")
 IMAGE_EXTS = {"jpg", "jpeg", "png", "gif", "webp"}
 
 

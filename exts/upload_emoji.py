@@ -44,6 +44,8 @@ class UploadEmoji(utils.Extension):
                 "Only one of `emoji` or `attachment` can be provided."
             )
 
+        await ctx.defer()
+
         emoji_url = None
         emoji_ext = None
         emoji_name = name
@@ -179,6 +181,28 @@ class UploadEmoji(utils.Extension):
         await self.add_emoji.call_with_binding(
             self.add_emoji.callback, ctx, emoji=emoji, attachment=None, name=None
         )
+
+    @naff.context_menu(
+        "Add First Emoji",
+        naff.CommandTypes.MESSAGE,
+        default_member_permissions=naff.Permissions.MANAGE_EMOJIS_AND_STICKERS,
+        dm_permission=False,
+    )  # type: ignore
+    async def add_first_emoji(self, ctx: utils.GuildInteractionContext):
+        message: naff.Message = ctx.target  # type: ignore
+
+        if match := emoji_utils.DISCORD_EMOJI_REGEX.search(message.content):
+            emoji_animated = bool(match.group(1))
+            emoji_name = match.group(2)
+            emoji_id = int(match.group(3))
+            emoji = naff.PartialEmoji(
+                id=emoji_id, name=emoji_name, animated=emoji_animated
+            )
+            await self.add_emoji.call_with_binding(
+                self.add_emoji.callback, ctx, emoji=emoji, attachment=None, name=None
+            )
+        else:
+            raise naff.errors.BadArgument("No emojis found in this message.")
 
 
 def setup(bot):

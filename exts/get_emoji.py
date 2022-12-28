@@ -7,8 +7,6 @@ import tansy
 import common.emoji_utils as emoji_utils
 import common.utils as utils
 
-DISCORD_EMOJI_REGEX = re.compile(r"<(a?):([a-zA-Z0-9\_]{1,32}):([0-9]{15,20})>")
-
 
 class GetEmojis(utils.Extension):
     def __init__(self, bot: utils.CherubBase) -> None:
@@ -35,7 +33,7 @@ class GetEmojis(utils.Extension):
 
         message: naff.Message = ctx.target  # type: ignore
 
-        if matches := DISCORD_EMOJI_REGEX.findall(message.content):
+        if matches := emoji_utils.DISCORD_EMOJI_REGEX.findall(message.content):
             emoji_urls: list[str] = []
 
             for match in matches:
