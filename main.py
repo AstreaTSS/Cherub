@@ -25,7 +25,7 @@ intents = naff.Intents.new(
 )
 mentions = naff.AllowedMentions.all()
 activity = naff.Activity.create(name="for emojis", type=naff.ActivityType.WATCHING)
-bot = naff.Client(
+bot = utils.CherubBase(
     intents=intents,
     allowed_mentions=mentions,
     activity=activity,

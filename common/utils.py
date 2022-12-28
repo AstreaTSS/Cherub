@@ -8,12 +8,44 @@ import aiohttp
 import naff
 
 
+class CherubBase(naff.Client):
+    if typing.TYPE_CHECKING:
+        import asyncio
+
+        init_load: bool
+        fully_ready: asyncio.Event
+        color: naff.Color
+        owner: naff.User
+
+
+class CherubContextMixin:
+    bot: CherubBase
+
+
+class GuildContextMixin(CherubContextMixin):
+    guild: naff.Guild
+
+
+class CherubContext(CherubContextMixin, naff.Context):
+    pass
+
+
+class CherubInteractionContext(CherubContextMixin, naff.InteractionContext):
+    pass
+
+
+class GuildInteractionContext(GuildContextMixin, naff.InteractionContext):
+    pass
+
+
 def error_embed_generate(error_msg: str):
     return naff.Embed(color=naff.RoleColors.RED, description=error_msg)
 
 
 async def error_handle(
-    bot: naff.Client, error: Exception, ctx: typing.Optional[naff.Context] = None
+    bot: CherubBase,
+    error: Exception,
+    ctx: typing.Optional[naff.Context] = None,
 ):
     # handles errors and sends them to owner
     if isinstance(error, aiohttp.ServerDisconnectedError):
@@ -62,7 +94,7 @@ def string_split(string: str):
 
 
 async def msg_to_owner(
-    bot: naff.Client,
+    bot: CherubBase,
     chunks: list[str] | list[naff.Embed] | list[str | naff.Embed] | str | naff.Embed,
 ):
     if not isinstance(chunks, list):
@@ -118,12 +150,12 @@ class CustomCheckFailure(naff.errors.BadArgument):
     pass
 
 
-async def _global_checks(ctx: naff.Context):
+async def _global_checks(ctx: CherubContext):
     return ctx.bot.fully_ready.is_set()
 
 
 class Extension(naff.Extension):
-    def __new__(cls, bot: naff.Client, *args, **kwargs):
+    def __new__(cls, bot: CherubBase, *args, **kwargs):
         new_cls = super().__new__(cls, bot, *args, **kwargs)
         new_cls.add_ext_check(_global_checks)  # type: ignore
         return new_cls
