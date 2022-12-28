@@ -36,7 +36,7 @@ bot = utils.CherubBase(
 bot.cache.enable_emoji_cache = True
 bot.cache.emoji_cache = {}
 
-bot.color = naff.Color(int(os.environ["BOT_COLOR"]))  # 3cc7a1, aka 3983265
+bot.color = naff.Color(int(os.environ["BOT_COLOR"]))  # #000000, aka 0
 bot.init_load = True
 
 
