@@ -125,7 +125,7 @@ class GeneralCMDS(utils.Extension):
         )
 
         links = [
-            f"Invite: [Link]({self.invite_link})",
+            f"Invite Bot: [Link]({self.invite_link})",
             "Support Server: [Link](https://discord.gg/NSdetwGjpK)",
             "Source Code: [Link](https://github.com/AstreaTSS/Cherub)",
         ]
