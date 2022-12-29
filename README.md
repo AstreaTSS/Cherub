@@ -11,3 +11,4 @@ So far, Cherub only has emoji-related commands - the bot can get the emoji URL o
 Links:
 * [Invite Bot](https://discord.com/api/oauth2/authorize?client_id=1057529716686454854&permissions=8&scope=bot%20applications.commands)
 * [Join Support Server](https://discord.gg/NSdetwGjpK)
+* [Support me on Ko-fi](https://ko-fi.com/astreatss)
