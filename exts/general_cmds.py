@@ -118,7 +118,7 @@ class GeneralCMDS(utils.Extension):
                         "NAFF Version:"
                         f" [{naff.const.__version__}](https://github.com/NAFTeam/NAFF/tree/NAFF-{naff.const.__version__})"
                     ),
-                    "Made By: [Astrea49](https://github.com/AstreaTSS)",
+                    "Made By: [AstreaTSS](https://github.com/AstreaTSS)",
                 )
             ),
             inline=True,
