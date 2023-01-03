@@ -1,6 +1,5 @@
 import asyncio
 import importlib
-import os
 import subprocess
 import time
 
@@ -13,8 +12,13 @@ class GeneralCMDS(utils.Extension):
     def __init__(self, bot: utils.CherubBase):
         self.name = "General"
         self.bot: utils.CherubBase = bot
+        self.invite_link = ""
 
-        self.invite_link = f"https://discord.com/api/oauth2/authorize?client_id={bot.owner.id}&permissions=8&scope=bot%20applications.commands"
+        asyncio.create_task(self.when_ready())
+
+    async def when_ready(self) -> None:
+        await self.bot.wait_until_ready()
+        self.invite_link = f"https://discord.com/api/oauth2/authorize?client_id={self.bot.owner.id}&permissions=8&scope=bot%20applications.commands"
 
     def _get_commit_hash(self):
         return (
