@@ -8,6 +8,9 @@ import logging
 import os
 
 import naff
+import tansy
+
+tansy.install_naff_speedups()
 
 import common.utils as utils
 
