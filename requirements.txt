@@ -1,4 +1,4 @@
-naff[speedup]==2.0.0
+naff[speedup]==2.1.0
 tansy==0.5.2
 python-dotenv==0.21.0
 humanize==4.4.0
