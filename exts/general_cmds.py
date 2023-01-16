@@ -77,7 +77,7 @@ class GeneralCMDS(utils.Extension):
     async def about(self, ctx: naff.InteractionContext):
         msg_list = [
             (
-                "I'm Cherub, an experimental utility bot. I'm the successor to"
+                "I'm **Cherub**, an experimental utility bot. I'm the successor to"
                 " Seraphim, an old bot of my owner, and am meant to implement the best"
                 " features from that bot."
             ),
