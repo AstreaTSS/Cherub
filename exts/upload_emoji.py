@@ -97,7 +97,7 @@ class UploadEmoji(utils.Extension):
         guild_emojis = await ctx.guild.fetch_all_custom_emojis()
 
         if emoji_id:
-            if await ctx.guild.fetch_custom_emoji(emoji_id):
+            if next((e for e in guild_emojis if e.id and int(e.id) == emoji_id), None):
                 raise utils.CustomCheckFailure("This emoji is already on this server.")
 
         elif next((e for e in guild_emojis if e.name == emoji_name), None):
