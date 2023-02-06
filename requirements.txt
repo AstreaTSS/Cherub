@@ -1,6 +1,6 @@
 naff[speedup]==2.1.0
 tansy==0.5.2
 python-dotenv==0.21.0
-humanize==4.4.0
+humanize==4.6.0
 Pillow==9.4.0
 uvloop==0.17.0; platform_system == "Linux"
