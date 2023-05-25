@@ -106,33 +106,27 @@ class UploadEmoji(utils.Extension):
             )
 
         animated = False
-        emoji_data = None
+        #  256 KiB, which i assume discord uses
+        raw_data = await emoji_utils.get_file_with_limit(emoji_url, 262144)
+        emoji_data = io.BytesIO(raw_data)
 
         if emoji_ext == "gif":
             # you see, gifs can be animated or not animated
             # so we need to check for that via an admittedly risky operation
 
-            # 256 KiB, which i assume discord uses
-            raw_data = await emoji_utils.get_file_with_limit(emoji_url, 262144)
             emoji_image = None
 
             try:
                 # i think this operation is basic enough not to need a generator?
                 # not totally sure, though
-                emoji_data = io.BytesIO(raw_data)
                 emoji_image = Image.open(emoji_data)
                 animated = emoji_image.is_animated
             except:
-                if emoji_data:
-                    emoji_data.close()
+                if emoji_image:
+                    emoji_image.close()
                 raise naff.errors.BadArgument("Invalid GIF provided.")
-            finally:
-                del raw_data
-
-        if not emoji_data:
-            raw_data = await emoji_utils.get_file_with_limit(emoji_url, 262144)
-            emoji_data = io.BytesIO(raw_data)
-            del raw_data
+            else:
+                emoji_data.seek(0)
 
         if animated:
             emoji_count = len(tuple(e for e in guild_emojis if e.animated))
