@@ -127,8 +127,6 @@ class UploadEmoji(utils.Extension):
                     emoji_data.close()
                 raise naff.errors.BadArgument("Invalid GIF provided.")
             finally:
-                if emoji_image:
-                    emoji_image.close()
                 del raw_data
 
         if not emoji_data:
