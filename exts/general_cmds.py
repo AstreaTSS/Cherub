@@ -84,10 +84,8 @@ class GeneralCMDS(utils.Extension):
     )
     async def support(self, ctx: ipy.InteractionContext) -> None:
         embed = utils.make_embed(
-            (
-                "If you need help with the bot, or just want to hang out, join the"
-                " support server!"
-            ),
+            "If you need help with the bot, or just want to hang out, join the"
+            " support server!",
             title="Support Server",
         )
         button = ipy.Button(
