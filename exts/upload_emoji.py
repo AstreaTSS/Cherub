@@ -2,7 +2,7 @@ import importlib
 import io
 import typing
 
-import naff
+import interactions as ipy
 import tansy
 from PIL import Image
 
@@ -18,7 +18,7 @@ class UploadEmoji(utils.Extension):
     @tansy.slash_command(
         name="add-emoji",
         description="Adds the URL, emoji, or image given as an emoji to this server.",
-        default_member_permissions=naff.Permissions.MANAGE_EMOJIS_AND_STICKERS,
+        default_member_permissions=ipy.Permissions.MANAGE_EMOJIS_AND_STICKERS,
         dm_permission=False,
     )
     @utils.bot_can_upload_emoji()
@@ -28,7 +28,7 @@ class UploadEmoji(utils.Extension):
         emoji: typing.Optional[str] = tansy.Option(
             "The emoji or image URL to upload.", default=None
         ),
-        attachment: typing.Optional[naff.Attachment] = tansy.Option(
+        attachment: typing.Optional[ipy.Attachment] = tansy.Option(
             "The file to use as an emoji.", default=None
         ),
         name: typing.Optional[str] = tansy.Option(
@@ -36,15 +36,13 @@ class UploadEmoji(utils.Extension):
         ),
     ):
         if not emoji and not attachment:
-            raise naff.errors.BadArgument(
+            raise ipy.errors.BadArgument(
                 "Either an emoji, URL, or an attachment must be provided."
             )
         if emoji and attachment:
-            raise naff.errors.BadArgument(
+            raise ipy.errors.BadArgument(
                 "Only one of `emoji` or `attachment` can be provided."
             )
-
-        await ctx.defer()
 
         emoji_id = None
         emoji_url = None
@@ -53,7 +51,7 @@ class UploadEmoji(utils.Extension):
 
         if emoji:
             try:
-                if isinstance(emoji, naff.PartialEmoji):
+                if isinstance(emoji, ipy.PartialEmoji):
                     # happens with commands using the direct callback
                     partial_emoji = emoji
                 else:
@@ -68,10 +66,10 @@ class UploadEmoji(utils.Extension):
                 emoji_ext = "gif" if partial_emoji.animated else "png"
                 emoji_name = emoji_name or partial_emoji.name
 
-            except naff.errors.BadArgument:
+            except ipy.errors.BadArgument:
                 emoji_url, emoji_ext = await emoji_utils.get_image_url(emoji)
                 if not emoji_url or not emoji_ext:
-                    raise naff.errors.BadArgument(
+                    raise ipy.errors.BadArgument(
                         "This argument is not a valid emoji or image URL."
                     ) from None
                 emoji_name = (
@@ -82,17 +80,17 @@ class UploadEmoji(utils.Extension):
             emoji_url = attachment.url
 
             if not attachment.content_type:
-                raise naff.errors.BadArgument("The attachment is not a valid image.")
+                raise ipy.errors.BadArgument("The attachment is not a valid image.")
 
             emoji_ext = attachment.content_type.split("/")[1]
             if emoji_ext not in emoji_utils.IMAGE_EXTS:
-                raise naff.errors.BadArgument("The attachment is not a valid image.")
+                raise ipy.errors.BadArgument("The attachment is not a valid image.")
 
             emoji_name = emoji_name or attachment.filename
 
         if not emoji_url or not emoji_name or not emoji_ext:
             # no idea how this would happen
-            raise naff.errors.BadArgument("Invalid argument passed.")
+            raise ipy.errors.BadArgument("Invalid argument passed.")
 
         guild_emojis = await ctx.guild.fetch_all_custom_emojis()
 
@@ -124,7 +122,7 @@ class UploadEmoji(utils.Extension):
             except:
                 if emoji_image:
                     emoji_image.close()
-                raise naff.errors.BadArgument("Invalid GIF provided.")
+                raise ipy.errors.BadArgument("Invalid GIF provided.")
             else:
                 emoji_data.seek(0)
 
@@ -144,7 +142,7 @@ class UploadEmoji(utils.Extension):
                 imagefile=emoji_data,
                 reason=f"Created by {str(ctx.author)}.",
             )
-        except naff.errors.HTTPException as e:
+        except ipy.errors.HTTPException as e:
             raise utils.CustomCheckFailure(
                 "".join(
                     (
@@ -168,14 +166,14 @@ class UploadEmoji(utils.Extension):
     @tansy.slash_command(
         name="clone-emoji",
         description="Clones an emoji from one server to this one.",
-        default_member_permissions=naff.Permissions.MANAGE_EMOJIS_AND_STICKERS,
+        default_member_permissions=ipy.Permissions.MANAGE_EMOJIS_AND_STICKERS,
         dm_permission=False,
     )
     @utils.bot_can_upload_emoji()
     async def clone_emoji(
         self,
         ctx: utils.GuildInteractionContext,
-        emoji: naff.PartialEmoji = tansy.Option(
+        emoji: ipy.PartialEmoji = tansy.Option(
             "The emoji to clone.",
             type=str,
             converter=emoji_utils.CustomPartialEmojiConverter,
@@ -185,27 +183,27 @@ class UploadEmoji(utils.Extension):
             self.add_emoji.callback, ctx, emoji=emoji, attachment=None, name=None
         )
 
-    @naff.context_menu(
+    @ipy.context_menu(
         "Add First Emoji",
-        naff.CommandTypes.MESSAGE,
-        default_member_permissions=naff.Permissions.MANAGE_EMOJIS_AND_STICKERS,
+        context_type=ipy.CommandType.MESSAGE,
+        default_member_permissions=ipy.Permissions.MANAGE_EMOJIS_AND_STICKERS,
         dm_permission=False,
-    )  # type: ignore
+    )
     async def add_first_emoji(self, ctx: utils.GuildInteractionContext):
-        message: naff.Message = ctx.target  # type: ignore
+        message: ipy.Message = ctx.target  # type: ignore
 
         if match := emoji_utils.DISCORD_EMOJI_REGEX.search(message.content):
             emoji_animated = bool(match[1])
             emoji_name = match[2]
             emoji_id = int(match[3])
-            emoji = naff.PartialEmoji(
+            emoji = ipy.PartialEmoji(
                 id=emoji_id, name=emoji_name, animated=emoji_animated
             )
             await self.add_emoji.call_with_binding(
                 self.add_emoji.callback, ctx, emoji=emoji, attachment=None, name=None
             )
         else:
-            raise naff.errors.BadArgument("No emojis found in this message.")
+            raise ipy.errors.BadArgument("No emojis found in this message.")
 
 
 def setup(bot):

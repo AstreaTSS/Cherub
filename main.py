@@ -7,10 +7,8 @@ import contextlib
 import logging
 import os
 
-import naff
-import tansy
-
-tansy.install_naff_speedups()
+import interactions as ipy
+from interactions.ext import prefixed_commands as prefixed
 
 import common.utils as utils
 
@@ -25,14 +23,14 @@ handler.setFormatter(
 )
 logger.addHandler(handler)
 
-intents = naff.Intents.new(
+intents = ipy.Intents.new(
     guilds=True,
     guild_emojis_and_stickers=True,
     messages=True,
 )
-mentions = naff.AllowedMentions.all()
-activity = naff.Activity.create(
-    name="in the ethereal realm", type=naff.ActivityType.WATCHING
+mentions = ipy.AllowedMentions.all()
+activity = ipy.Activity.create(
+    name="in the ethereal realm", type=ipy.ActivityType.WATCHING
 )
 bot = utils.CherubBase(
     intents=intents,
@@ -40,28 +38,32 @@ bot = utils.CherubBase(
     activity=activity,
     logger=logger,
     sync_interactions=False,
+    sync_ext=False,
     send_command_tracebacks=False,
+    auto_defer=ipy.AutoDefer(enabled=True, time_until_defer=0),
 )
 bot.cache.enable_emoji_cache = True
 bot.cache.emoji_cache = {}
 
-bot.color = naff.Color(int(os.environ["BOT_COLOR"]))  # #000000, aka 0
+bot.color = ipy.Color(int(os.environ["BOT_COLOR"]))  # #000000, aka 0
 bot.init_load = True
 
+prefixed.setup(bot)
 
-@naff.listen(disable_default_listeners=True)
-async def on_error(event: naff.events.Error):
+
+@ipy.listen(disable_default_listeners=True)
+async def on_error(event: ipy.events.Error):
     await utils.error_handle(bot, event.error, event.ctx)
 
 
-@naff.listen("startup")
+@ipy.listen("startup")
 async def on_startup():
     bot.fully_ready.set()
 
 
-@naff.listen("ready")
+@ipy.listen("ready")
 async def on_ready():
-    utcnow = naff.Timestamp.utcnow()
+    utcnow = ipy.Timestamp.utcnow()
     time_format = f"<t:{int(utcnow.timestamp())}:f>"
 
     connect_msg = (

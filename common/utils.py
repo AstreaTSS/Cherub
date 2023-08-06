@@ -1,21 +1,28 @@
 import collections
 import logging
+import os
 import traceback
 import typing
 from pathlib import Path
 
 import aiohttp
-import naff
+import interactions as ipy
+from interactions.ext import prefixed_commands as prefixed
 
 
-class CherubBase(naff.Client):
-    if typing.TYPE_CHECKING:
-        import asyncio
+if typing.TYPE_CHECKING:
+    import asyncio
 
+    class CherubBase(prefixed.PrefixedInjectedClient):
         init_load: bool
         fully_ready: asyncio.Event
-        color: naff.Color
-        owner: naff.User
+        color: ipy.Color
+        owner: ipy.User
+
+else:
+
+    class CherubBase(ipy.Client):
+        pass
 
 
 class CherubContextMixin:
@@ -23,29 +30,33 @@ class CherubContextMixin:
 
 
 class GuildContextMixin(CherubContextMixin):
-    guild: naff.Guild
+    guild: ipy.Guild
 
 
-class CherubContext(CherubContextMixin, naff.Context):
+class CherubContext(CherubContextMixin, ipy.BaseContext):
     pass
 
 
-class CherubInteractionContext(CherubContextMixin, naff.InteractionContext):
+class CherubInteractionContext(CherubContextMixin, ipy.InteractionContext):
     pass
 
 
-class GuildInteractionContext(GuildContextMixin, naff.InteractionContext):
+class CherubSlashContext(CherubContextMixin, ipy.SlashContext):
+    pass
+
+
+class GuildInteractionContext(GuildContextMixin, ipy.InteractionContext):
     pass
 
 
 def error_embed_generate(error_msg: str):
-    return naff.Embed(color=naff.RoleColors.RED, description=error_msg)
+    return ipy.Embed(color=ipy.RoleColors.RED, description=error_msg)
 
 
 async def error_handle(
     bot: CherubBase,
     error: Exception,
-    ctx: typing.Optional[naff.Context] = None,
+    ctx: typing.Optional[ipy.BaseContext] = None,
 ):
     # handles errors and sends them to owner
     if isinstance(error, aiohttp.ServerDisconnectedError):
@@ -59,7 +70,7 @@ async def error_handle(
             chunks[i][0] = f"```py\n{chunks[i][0]}"
             chunks[i][-1] += "\n```"
 
-        final_chunks: list[str | naff.Embed] = [
+        final_chunks: list[str | ipy.Embed] = [
             error_embed_generate("\n".join(chunk)) for chunk in chunks
         ]
         if ctx and hasattr(ctx, "message") and hasattr(ctx.message, "jump_url"):
@@ -70,11 +81,11 @@ async def error_handle(
     await msg_to_owner(bot, to_send)
 
     if ctx:
-        if isinstance(ctx, naff.PrefixedContext):
+        if isinstance(ctx, prefixed.PrefixedContext):
             await ctx.reply(
                 "An internal error has occured. The bot owner has been notified."
             )
-        elif isinstance(ctx, naff.InteractionContext):
+        elif isinstance(ctx, ipy.InteractionContext):
             await ctx.send(
                 content=(
                     "An internal error has occured. The bot owner has been notified."
@@ -95,14 +106,14 @@ def string_split(string: str):
 
 async def msg_to_owner(
     bot: CherubBase,
-    chunks: list[str] | list[naff.Embed] | list[str | naff.Embed] | str | naff.Embed,
+    chunks: list[str] | list[ipy.Embed] | list[str | ipy.Embed] | str | ipy.Embed,
 ):
     if not isinstance(chunks, list):
         chunks = [chunks]
 
     # sends a message to the owner
     for chunk in chunks:
-        if isinstance(chunk, naff.Embed):
+        if isinstance(chunk, ipy.Embed):
             await bot.owner.send(embeds=chunk)
         else:
             await bot.owner.send(chunk)
@@ -145,27 +156,39 @@ def get_all_extensions(str_path, folder="exts"):
     return ext_files
 
 
-class CustomCheckFailure(naff.errors.BadArgument):
+_bot_color = ipy.Color(int(os.environ["BOT_COLOR"]))
+
+
+def make_embed(description: str, *, title: str | None = None) -> ipy.Embed:
+    return ipy.Embed(
+        title=title,
+        description=description,
+        color=_bot_color,
+        timestamp=ipy.Timestamp.utcnow(),
+    )
+
+
+class CustomCheckFailure(ipy.errors.BadArgument):
     # custom classs for custom prerequisite failures outside of normal command checks
     pass
 
 
 def bot_can_upload_emoji() -> typing.Any:
     async def predicate(ctx: GuildInteractionContext):
-        bot_perms: naff.Permissions = ctx.channel.permissions_for(ctx.guild.me)  # type: ignore
-        if naff.Permissions.MANAGE_EMOJIS_AND_STICKERS not in bot_perms:
+        bot_perms: ipy.Permissions = ctx.channel.permissions_for(ctx.guild.me)  # type: ignore
+        if ipy.Permissions.MANAGE_EMOJIS_AND_STICKERS not in bot_perms:
             raise CustomCheckFailure("The bot can't upload emojis on this server.")
 
         return True
 
-    return naff.check(predicate)  # type: ignore
+    return ipy.check(predicate)  # type: ignore
 
 
 async def _global_checks(ctx: CherubContext):
     return ctx.bot.fully_ready.is_set()
 
 
-class Extension(naff.Extension):
+class Extension(ipy.Extension):
     def __new__(cls, bot: CherubBase, *args, **kwargs):
         new_cls = super().__new__(cls, bot, *args, **kwargs)
         new_cls.add_ext_check(_global_checks)  # type: ignore

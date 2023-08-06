@@ -3,7 +3,7 @@ import importlib
 import subprocess
 import time
 
-import naff
+import interactions as ipy
 
 import common.utils as utils
 
@@ -30,51 +30,75 @@ class GeneralCMDS(utils.Extension):
     async def get_commit_hash(self):
         return await asyncio.to_thread(self._get_commit_hash)
 
-    @naff.slash_command(
+    @ipy.slash_command(
         "ping",
         description=(
             "Pings the bot. Great way of finding out if the bot's working correctly,"
             " but has no real use."
         ),
     )
-    async def ping(self, ctx: utils.CherubInteractionContext):
+    async def ping(self, ctx: utils.CherubSlashContext) -> None:
         """
         Pings the bot. Great way of finding out if the bot's working correctly, but has no real use.
         """
 
         start_time = time.perf_counter()
-        ping_discord = round((self.bot.latency * 1000), 2)
+        average_ping = round((self.bot.latency * 1000), 2)
 
-        mes = await ctx.send(
-            f"Pong!\n`{ping_discord}` ms from Discord.\nCalculating personal ping..."
+        embed = ipy.Embed(
+            "Pong!", color=self.bot.color, timestamp=ipy.Timestamp.utcnow()
         )
+        embed.set_footer("As of")
+        embed.description = f"Average Ping: `{average_ping}` ms\nCalculating RTT..."
+
+        mes = await ctx.send(embed=embed)
 
         end_time = time.perf_counter()
-        ping_personal = round(((end_time - start_time) * 1000), 2)
-
-        await ctx.edit(
-            message=mes,
-            content=(
-                f"Pong!\n`{ping_discord}` ms from Discord.\n`{ping_personal}` ms"
-                " personally."
-            ),
+        # not really rtt ping but shh
+        rtt_ping = round(((end_time - start_time) * 1000), 2)
+        embed.description = (
+            f"Average Ping: `{average_ping}` ms\nRTT Ping: `{rtt_ping}` ms"
         )
 
-    @naff.slash_command(
+        await ctx.edit(mes, embed=embed)
+
+    @ipy.slash_command(
         name="invite",
         description="Sends the link to invite the bot to your server.",
     )
-    async def invite(self, ctx: utils.CherubInteractionContext):
-        await ctx.send(self.invite_link)
+    async def invite(self, ctx: utils.CherubSlashContext) -> None:
+        embed = utils.make_embed(
+            "If you want to invite me to your server, use the Invite Link below!",
+            title="Invite Bot",
+        )
+        button = ipy.Button(
+            style=ipy.ButtonStyle.URL,
+            label="Invite Link",
+            url=self.invite_link,
+        )
 
-    @naff.slash_command(
+        await ctx.send(embeds=embed, components=button)
+
+    @ipy.slash_command(
         "support", description="Gives an invite link to the support server."
     )
-    async def support(self, ctx: naff.InteractionContext):
-        await ctx.send("Support server:\nhttps://discord.gg/NSdetwGjpK")
+    async def support(self, ctx: ipy.InteractionContext) -> None:
+        embed = utils.make_embed(
+            (
+                "If you need help with the bot, or just want to hang out, join the"
+                " support server!"
+            ),
+            title="Support Server",
+        )
+        button = ipy.Button(
+            style=ipy.ButtonStyle.URL,
+            label="Join Support Server",
+            url="https://discord.gg/NSdetwGjpK",
+        )
+        await ctx.send(embeds=embed, components=button)
 
-    @naff.slash_command("about", description="Gives information about the bot.")
-    async def about(self, ctx: naff.InteractionContext):
+    @ipy.slash_command("about", description="Gives information about the bot.")
+    async def about(self, ctx: utils.CherubSlashContext):
         msg_list = [
             (
                 "I'm **Cherub**, an experimental utility bot. I'm the successor to"
@@ -88,7 +112,7 @@ class GeneralCMDS(utils.Extension):
             ),
         ]
 
-        about_embed = naff.Embed(
+        about_embed = ipy.Embed(
             title="About",
             color=self.bot.color,
             description="\n".join(msg_list),
@@ -101,7 +125,7 @@ class GeneralCMDS(utils.Extension):
 
         commit_hash = await self.get_commit_hash()
         command_num = len(self.bot.application_commands) + len(
-            self.bot.prefixed_commands
+            self.bot.prefixed.commands
         )
 
         about_embed.add_field(
@@ -112,15 +136,15 @@ class GeneralCMDS(utils.Extension):
                     f"Commands: {command_num} ",
                     (
                         "Startup Time:"
-                        f" {naff.Timestamp.fromdatetime(self.bot.start_time).format(naff.TimestampStyles.RelativeTime)}"
+                        f" {ipy.Timestamp.fromdatetime(self.bot.start_time).format(ipy.TimestampStyles.RelativeTime)}"
                     ),
                     (
                         "Commit Hash:"
                         f" [{commit_hash}](https://github.com/AstreaTSS/Cherub/commit/{commit_hash})"
                     ),
                     (
-                        "NAFF Version:"
-                        f" [{naff.const.__version__}](https://github.com/NAFTeam/NAFF/tree/NAFF-{naff.const.__version__})"
+                        "Interactions.py Version:"
+                        f" [{ipy.__version__}](https://github.com/interactions-py/interactions.py/tree/{ipy.__version__})"
                     ),
                     "Made By: [AstreaTSS](https://github.com/AstreaTSS)",
                 )
@@ -139,7 +163,7 @@ class GeneralCMDS(utils.Extension):
             value="\n".join(links),
             inline=True,
         )
-        about_embed.timestamp = naff.Timestamp.utcnow()
+        about_embed.timestamp = ipy.Timestamp.utcnow()
 
         await ctx.send(embed=about_embed)
 

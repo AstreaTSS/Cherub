@@ -1,8 +1,8 @@
 import importlib
-import re
 
-import naff
+import interactions as ipy
 import tansy
+from interactions.models.internal.application_commands import auto_defer
 
 import common.emoji_utils as emoji_utils
 import common.utils as utils
@@ -19,7 +19,7 @@ class GetEmojis(utils.Extension):
     async def emoji_url(
         self,
         ctx: utils.CherubInteractionContext,
-        emoji: naff.PartialEmoji = tansy.Option(
+        emoji: ipy.PartialEmoji = tansy.Option(
             "The emoji to get the URL of.",
             type=str,
             converter=emoji_utils.CustomPartialEmojiConverter,
@@ -27,30 +27,27 @@ class GetEmojis(utils.Extension):
     ):
         await ctx.send(f"URL: {emoji_utils.get_emoji_url(emoji)}", ephemeral=True)
 
-    @naff.context_menu("Get Emoji URLs", naff.CommandTypes.MESSAGE)  # type: ignore
+    @ipy.context_menu("Get Emoji URLs", context_type=ipy.CommandType.MESSAGE)
+    @auto_defer(enabled=True, ephemeral=True)
     async def get_emoji_urls(self, ctx: utils.CherubInteractionContext) -> None:
-        await ctx.defer(ephemeral=True)
+        message: ipy.Message = ctx.target  # type: ignore
 
-        message: naff.Message = ctx.target  # type: ignore
+        if not (matches := emoji_utils.DISCORD_EMOJI_REGEX.findall(message.content)):
+            raise ipy.errors.BadArgument("No emojis found in this message.")
 
-        if matches := emoji_utils.DISCORD_EMOJI_REGEX.findall(message.content):
-            emoji_urls: list[str] = []
+        emoji_urls: list[str] = []
+        for match in matches:
+            emoji_name = match[1]
+            emoji_id = int(match[2])
+            emoji = ipy.PartialEmoji(
+                id=emoji_id, name=emoji_name, animated=bool(match[0])
+            )
 
-            for match in matches:
-                emoji_animated = bool(match[0])
-                emoji_name = match[1]
-                emoji_id = int(match[2])
-                emoji = naff.PartialEmoji(
-                    id=emoji_id, name=emoji_name, animated=emoji_animated
-                )
+            emoji_urls.append(emoji_utils.get_emoji_url(emoji))
 
-                emoji_urls.append(emoji_utils.get_emoji_url(emoji))
-
-            # removes dups while preserving order
-            emoji_urls_str = "\n".join(dict.fromkeys(emoji_urls))
-            await ctx.send(f"URL(s):\n{emoji_urls_str}", ephemeral=True)
-        else:
-            raise naff.errors.BadArgument("No emojis found in this message.")
+        # removes dups while preserving order
+        emoji_urls_str = "\n".join(dict.fromkeys(emoji_urls))
+        await ctx.send(f"URL(s):\n{emoji_urls_str}", ephemeral=True)
 
 
 def setup(bot):

@@ -4,7 +4,7 @@ import typing
 
 import aiohttp
 import humanize
-import naff
+import interactions as ipy
 
 DISCORD_EMOJI_REGEX = re.compile(r"<(a?):([a-zA-Z0-9\_]{1,32}):([0-9]{15,})>")
 IMAGE_EXTS = {"jpg", "jpeg", "png", "gif", "webp"}
@@ -80,20 +80,20 @@ async def get_file_with_limit(url: str, limit: int, *, equal_to: bool = True):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
             if resp.status != 200:
-                raise naff.errors.BadArgument("I can't get this file/URL!")
+                raise ipy.errors.BadArgument("I can't get this file/URL!")
 
             try:
                 if equal_to:
                     await resp.content.readexactly(
                         limit + 1
                     )  # we want this to error out even if the file is exactly the limit
-                    raise naff.errors.BadArgument(
+                    raise ipy.errors.BadArgument(
                         "The file/URL given is over"
                         f" {humanize.naturalsize(limit, binary=True)}!"
                     )
                 else:
                     await resp.content.readexactly(limit)
-                    raise naff.errors.BadArgument(
+                    raise ipy.errors.BadArgument(
                         "The file/URL given is at or over"
                         f" {humanize.naturalsize(limit, binary=True)}!"
                     )
@@ -104,23 +104,23 @@ async def get_file_with_limit(url: str, limit: int, *, equal_to: bool = True):
                 return e.partial
 
 
-class CustomPartialEmojiConverter(naff.Converter[naff.PartialEmoji]):
+class CustomPartialEmojiConverter(ipy.Converter[ipy.PartialEmoji]):
     @staticmethod
-    async def convert(ctx: naff.Context, argument: str) -> naff.PartialEmoji:
+    async def convert(ctx: ipy.BaseContext, argument: str) -> ipy.PartialEmoji:
         if match := DISCORD_EMOJI_REGEX.match(argument):
             emoji_animated = bool(match[1])
             emoji_name = match[2]
             emoji_id = int(match[3])
 
-            return naff.PartialEmoji(
+            return ipy.PartialEmoji(
                 id=emoji_id, name=emoji_name, animated=emoji_animated
             )
 
-        raise naff.errors.BadArgument(
+        raise ipy.errors.BadArgument(
             f'Couldn\'t convert "{argument}" to a Discord emoji.'
         )
 
 
-def get_emoji_url(emoji: naff.PartialEmoji):
+def get_emoji_url(emoji: ipy.PartialEmoji):
     fmt = "gif" if emoji.animated else "png"
-    return f"{naff.Asset.BASE}/emojis/{emoji.id}.{fmt}"
+    return f"{ipy.Asset.BASE}/emojis/{emoji.id}.{fmt}"
