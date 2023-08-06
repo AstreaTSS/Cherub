@@ -213,6 +213,7 @@ class UploadEmoji(utils.Extension):
         default_member_permissions=ipy.Permissions.MANAGE_EMOJIS_AND_STICKERS,
         dm_permission=False,
     )
+    @utils.bot_can_upload_emoji()
     @auto_defer(ephemeral=True)
     async def add_emojis_from_message(self, ctx: utils.GuildInteractionContext):
         message: ipy.Message = ctx.target  # type: ignore
