@@ -1,9 +1,11 @@
+import asyncio
 import importlib
 import io
 import typing
 
 import interactions as ipy
 import tansy
+from interactions.models.internal.application_commands import auto_defer
 from PIL import Image
 
 import common.emoji_utils as emoji_utils
@@ -204,6 +206,162 @@ class UploadEmoji(utils.Extension):
             )
         else:
             raise ipy.errors.BadArgument("No emojis found in this message.")
+
+    @ipy.context_menu(
+        "Add Emojis",
+        context_type=ipy.CommandType.MESSAGE,
+        default_member_permissions=ipy.Permissions.MANAGE_EMOJIS_AND_STICKERS,
+        dm_permission=False,
+    )
+    @auto_defer(ephemeral=True)
+    async def add_emojis_from_message(self, ctx: utils.GuildInteractionContext):
+        message: ipy.Message = ctx.target  # type: ignore
+
+        if not (matches := emoji_utils.DISCORD_EMOJI_REGEX.findall(message.content)):
+            raise ipy.errors.BadArgument("No emojis found in this message.")
+
+        guild_emojis = await ctx.guild.fetch_all_custom_emojis()
+        guild_emoji_ids = frozenset({int(e.id) for e in guild_emojis if e.id})
+
+        emoji_options: list[ipy.StringSelectOption] = []
+        emoji_option_values: set[str] = set()
+
+        for match in matches:
+            emoji_name = match[1]
+            emoji_id = int(match[2])
+            emoji = ipy.PartialEmoji(
+                id=emoji_id, name=emoji_name, animated=bool(match[0])
+            )
+
+            if emoji_id in guild_emoji_ids:
+                continue
+
+            emoji_option_value = f"{emoji_name}|{emoji_utils.get_emoji_url(emoji)}"
+            if emoji_option_value in emoji_option_values:
+                continue
+            emoji_option_values.add(emoji_option_value)
+
+            emoji_options.append(
+                ipy.StringSelectOption(
+                    label=emoji_name,
+                    value=emoji_option_value,
+                    emoji=emoji,
+                )
+            )
+
+        if not emoji_options:
+            raise ipy.errors.BadArgument(
+                "No emojis found in this message that aren't already in this server."
+            )
+
+        if len(emoji_options) > 25:
+            raise ipy.errors.BadArgument(
+                "There are too many emojis in this message. Support for more than 25"
+                " emojis will be added at a later date."
+            )
+
+        emoji_menu = ipy.StringSelectMenu(
+            *emoji_options,
+            placeholder="Select Emojis",
+            max_values=len(emoji_options),
+        )
+
+        msg = await ctx.send(
+            "Select the emojis you want to add.", components=[emoji_menu]
+        )
+
+        try:
+            menu_event = await self.bot.wait_for_component(
+                components=[emoji_menu], timeout=60
+            )
+
+            emoji_menu.disabled = True
+            await ctx.edit(
+                msg,
+                content="Select the emojis you want to add.",
+                components=[emoji_menu],
+            )
+            await menu_event.ctx.defer(ephemeral=True)
+
+            new_animated_emojis_size = 0
+            new_static_emojis_size = 0
+
+            animated_emoji_count = len(tuple(e for e in guild_emojis if e.animated))
+            normal_emoji_count = len(tuple(e for e in guild_emojis if not e.animated))
+
+            for emoji_entry in menu_event.ctx.values:
+                if emoji_entry.endswith(".gif"):
+                    new_animated_emojis_size += 1
+                else:
+                    new_static_emojis_size += 1
+
+            if animated_emoji_count + new_animated_emojis_size > ctx.guild.emoji_limit:
+                raise ipy.errors.BadArgument(
+                    "This guild has no more emoji slots for animated emojis."
+                )
+
+            if normal_emoji_count + new_static_emojis_size > ctx.guild.emoji_limit:
+                raise ipy.errors.BadArgument(
+                    "This guild has no more emoji slots for static emojis."
+                )
+
+            uploaded_emojis: list[ipy.CustomEmoji] = []
+
+            for emoji_entry in menu_event.ctx.values:
+                emoji_split = emoji_entry.split("|")
+                emoji_url = emoji_split[1]
+                emoji_data_bytes = await emoji_utils.get_file_with_limit(
+                    emoji_url, 262144
+                )
+                emoji_data = io.BytesIO(emoji_data_bytes)
+
+                try:
+                    uploaded_emoji = await ctx.guild.create_custom_emoji(
+                        name=emoji_split[0],
+                        imagefile=emoji_data,
+                        reason=f"Created by {str(ctx.author)}.",
+                    )
+                    uploaded_emojis.append(uploaded_emoji)
+                except ipy.errors.HTTPException as e:
+                    raise utils.CustomCheckFailure(
+                        "".join(
+                            (
+                                (
+                                    f"I was unable to add {emoji_split[0]}. This might"
+                                    " be due to me not having the "
+                                ),
+                                (
+                                    "permissions or the name being improper in some"
+                                    " way. Maybe this error will help you.\n\n"
+                                ),
+                                f"Error: `{e}`",
+                            )
+                        )
+                    ) from None
+                finally:
+                    emoji_data.close()
+
+            emoji_list = ", ".join(str(e) for e in uploaded_emojis)
+
+            if not ipy.Timestamp.utcnow() > menu_event.ctx.expires_at:
+                await menu_event.ctx.send(
+                    content=f"Successfully added emojis: {emoji_list}", ephemeral=True
+                )
+            else:
+                await ctx.channel.send(
+                    content=(
+                        f"{ctx.author.mention}, successfully added emojis: {emoji_list}"
+                    ),
+                    delete_after=10,
+                )
+
+        except asyncio.TimeoutError:
+            await ctx.edit(
+                msg,
+                content="You took too long to select emojis. Please try again.",
+                components=[],
+            )
+            return
 
 
 def setup(bot):
