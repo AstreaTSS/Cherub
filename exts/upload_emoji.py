@@ -255,10 +255,7 @@ class UploadEmoji(utils.Extension):
             )
 
         if len(emoji_options) > 25:
-            raise ipy.errors.BadArgument(
-                "There are too many emojis in this message. Support for more than 25"
-                " emojis will be added at a later date."
-            )
+            emoji_options = emoji_options[:25]
 
         emoji_menu = ipy.StringSelectMenu(
             *emoji_options,
