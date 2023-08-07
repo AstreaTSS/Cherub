@@ -1,3 +1,4 @@
+import contextlib
 import importlib
 
 import interactions as ipy
@@ -111,6 +112,9 @@ class Pinboard(utils.Extension):
             ),
         )
         await last_pin.unpin()
+
+        with contextlib.suppress(ipy.errors.HTTPException):
+            await event.message.delete()
 
 
 def setup(bot: utils.CherubBase):
