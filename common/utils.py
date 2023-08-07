@@ -9,6 +9,8 @@ import aiohttp
 import interactions as ipy
 from interactions.ext import prefixed_commands as prefixed
 
+import common.models as models
+
 
 if typing.TYPE_CHECKING:
     import asyncio
@@ -27,10 +29,13 @@ else:
 
 class CherubContextMixin:
     bot: CherubBase
+    guild: ipy.Guild
+    guild_id: ipy.Snowflake
 
 
 class GuildContextMixin(CherubContextMixin):
     guild: ipy.Guild
+    guild_id: ipy.Snowflake
 
 
 class CherubContext(CherubContextMixin, ipy.BaseContext):
@@ -166,6 +171,14 @@ def make_embed(description: str, *, title: str | None = None) -> ipy.Embed:
         color=_bot_color,
         timestamp=ipy.Timestamp.utcnow(),
     )
+
+
+async def fetch_config(guild_id: ipy.Snowflake_Type):
+    maybe_config = await models.Config.find_one(models.Config.guild_id == str(guild_id))
+    if maybe_config is None:
+        maybe_config = models.Config(guild_id=str(guild_id), pinboards={})
+        await maybe_config.create()
+    return maybe_config
 
 
 class CustomCheckFailure(ipy.errors.BadArgument):

@@ -3,4 +3,6 @@ tansy==0.8.0
 python-dotenv==1.0.0
 humanize==4.7.0
 Pillow==10.0.0
+motor[srv]==3.2.0
+beanie==1.21.0
 uvloop==0.17.0; platform_system == "Linux"

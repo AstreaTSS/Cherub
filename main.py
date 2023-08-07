@@ -9,9 +9,11 @@ import os
 
 import interactions as ipy
 from interactions.ext import prefixed_commands as prefixed
+from motor.motor_asyncio import AsyncIOMotorClient
+from beanie import init_beanie
 
 import common.utils as utils
-
+import common.models as models
 
 logger = logging.getLogger("cherub")
 logger.setLevel(logging.INFO)
@@ -27,6 +29,7 @@ intents = ipy.Intents.new(
     guilds=True,
     guild_emojis_and_stickers=True,
     messages=True,
+    message_content=True,
 )
 mentions = ipy.AllowedMentions.all()
 activity = ipy.Activity.create(
@@ -80,6 +83,8 @@ async def on_ready():
 
 async def start():
     bot.fully_ready = asyncio.Event()
+    client = AsyncIOMotorClient(os.environ["MONGO_DB_URL"])
+    await init_beanie(client.Cherub, document_models=[models.Config])
 
     ext_list = utils.get_all_extensions(os.environ.get("DIRECTORY_OF_BOT"))
     for ext in ext_list:
