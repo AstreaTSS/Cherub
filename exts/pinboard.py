@@ -73,11 +73,11 @@ class Pinboard(utils.Extension):
         if not destination_id:
             return
 
-        pins = await event.message.channel.fetch_pinned_messages()
+        pins: list[ipy.Message] = await event.message.channel.fetch_pinned_messages()
         last_pin = pins[0]
 
         embed = ipy.Embed(
-            description=last_pin.system_content,
+            description=last_pin.content or last_pin.system_content,
             color=ipy.RoleColors.LIGHTER_GRAY,
             timestamp=last_pin.timestamp,
         )
