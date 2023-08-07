@@ -87,7 +87,9 @@ class Pinboard(utils.Extension):
         )
 
         if last_pin.attachments:
-            embed.set_image(last_pin.attachments[0].url)
+            if first_image := next((a for a in last_pin.attachments if a.height), None):
+                embed.set_image(first_image.url)
+
             embed.add_field(
                 "Attachments",
                 "\n".join([f"[{x.filename}]({x.url})" for x in last_pin.attachments]),
