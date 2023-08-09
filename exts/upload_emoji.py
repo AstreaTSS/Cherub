@@ -5,7 +5,6 @@ import typing
 
 import interactions as ipy
 import tansy
-from interactions.models.internal.application_commands import auto_defer
 from PIL import Image
 
 import common.emoji_utils as emoji_utils
@@ -214,7 +213,7 @@ class UploadEmoji(utils.Extension):
         dm_permission=False,
     )
     @utils.bot_can_upload_emoji()
-    @auto_defer(ephemeral=True)
+    @ipy.auto_defer(ephemeral=True)
     async def add_emojis_from_message(self, ctx: utils.GuildInteractionContext):
         message: ipy.Message = ctx.target  # type: ignore
 

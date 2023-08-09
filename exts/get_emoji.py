@@ -2,7 +2,6 @@ import importlib
 
 import interactions as ipy
 import tansy
-from interactions.models.internal.application_commands import auto_defer
 
 import common.emoji_utils as emoji_utils
 import common.utils as utils
@@ -28,7 +27,7 @@ class GetEmojis(utils.Extension):
         await ctx.send(f"URL: {emoji_utils.get_emoji_url(emoji)}", ephemeral=True)
 
     @ipy.context_menu("Get Emoji URLs", context_type=ipy.CommandType.MESSAGE)
-    @auto_defer(enabled=True, ephemeral=True)
+    @ipy.auto_defer(enabled=True, ephemeral=True)
     async def get_emoji_urls(self, ctx: utils.CherubInteractionContext) -> None:
         message: ipy.Message = ctx.target  # type: ignore
 
