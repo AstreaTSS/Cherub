@@ -224,7 +224,7 @@ class UploadEmoji(utils.Extension):
         guild_emoji_ids = frozenset({int(e.id) for e in guild_emojis if e.id})
 
         emoji_options: list[ipy.StringSelectOption] = []
-        emoji_option_values: set[str] = set()
+        emoji_ids: set[int] = set()
 
         for match in matches:
             emoji_name = match[1]
@@ -236,15 +236,14 @@ class UploadEmoji(utils.Extension):
             if emoji_id in guild_emoji_ids:
                 continue
 
-            emoji_option_value = f"{emoji_name}|{emoji_utils.get_emoji_url(emoji)}"
-            if emoji_option_value in emoji_option_values:
+            if emoji_id in emoji_ids:
                 continue
-            emoji_option_values.add(emoji_option_value)
+            emoji_ids.add(emoji_id)
 
             emoji_options.append(
                 ipy.StringSelectOption(
                     label=emoji_name,
-                    value=emoji_option_value,
+                    value=f"{emoji_name}|{emoji_utils.get_emoji_url(emoji)}",
                     emoji=emoji,
                 )
             )
