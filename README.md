@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://cdn.discordapp.com/attachments/775915758588657664/1057802653054283806/CherubBanner.png" alt="Cherub's Banner" width="700"/>
+  <img src="https://cdn.astrea.cc/CherubBanner.png" alt="Cherub's Banner" width="700"/>
 </p>
 
 <p align="center">An experimental utility bot.</p>
