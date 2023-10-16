@@ -5,4 +5,4 @@ humanize==4.8.0
 Pillow==10.0.1
 motor[srv]==3.3.1
 beanie==1.22.6
-uvloop==0.17.0; platform_system == "Linux"
+uvloop==0.18.0; platform_system == "Linux"
