@@ -1,6 +1,6 @@
 discord-py-interactions[speedup]==5.11.0
 tansy==0.9.0
-python-dotenv==1.0.0
+python-dotenv==1.0.1
 humanize==4.9.0
 Pillow==10.2.0
 motor[srv]==3.3.2
