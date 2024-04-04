@@ -105,8 +105,8 @@ class UploadEmoji(utils.Extension):
             )
 
         animated = False
-        #  256 KiB, which i assume discord uses
-        raw_data = await emoji_utils.get_file_with_limit(emoji_url, 262144)
+        # 8 MiB seems like a reasonable limit
+        raw_data = await emoji_utils.get_file_with_limit(emoji_url, 8388608)
         emoji_data = io.BytesIO(raw_data)
 
         if emoji_ext == "gif":
@@ -136,6 +136,29 @@ class UploadEmoji(utils.Extension):
             raise utils.CustomCheckFailure(
                 "This guild has no more emoji slots for that type of emoji."
             )
+
+        # over 256 KiB, we need to compress the image
+        if emoji_data.getbuffer().nbytes > 262144:
+            emoji_image = Image.open(emoji_data)
+
+            try:
+                if emoji_image.width > 256 or emoji_image.height > 256:
+                    emoji_image.thumbnail((256, 256))
+
+                emoji_data = io.BytesIO()
+                emoji_image.save(emoji_data, format=emoji_ext, optimize=True)
+                emoji_data.seek(0)
+            except Exception:
+                raise ipy.errors.BadArgument(
+                    "The image provided is too large to be uploaded."
+                ) from None
+            finally:
+                emoji_image.close()
+
+            if emoji_data.getbuffer().nbytes > 262144:
+                raise ipy.errors.BadArgument(
+                    "The image provided is too large to be uploaded."
+                )
 
         try:
             uploaded_emoji = await ctx.guild.create_custom_emoji(
