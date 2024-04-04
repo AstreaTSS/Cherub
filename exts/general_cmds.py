@@ -18,7 +18,7 @@ class GeneralCMDS(utils.Extension):
 
     async def when_ready(self) -> None:
         await self.bot.wait_until_ready()
-        self.invite_link = f"https://discord.com/api/oauth2/authorize?client_id={self.bot.owner.id}&permissions=8&scope=bot%20applications.commands"
+        self.invite_link = f"https://discord.com/api/oauth2/authorize?client_id={self.bot.owner.id}&permissions=9312563227712&scope=bot%20applications.commands"
 
     def _get_commit_hash(self):
         return (
