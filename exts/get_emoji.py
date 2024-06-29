@@ -15,6 +15,7 @@ class GetEmojis(utils.Extension):
     @tansy.slash_command(
         name="emoji-url", description="Get the URL of a Discord emoji."
     )
+    @ipy.integration_types(guild=True, user=True)
     async def emoji_url(
         self,
         ctx: utils.CherubInteractionContext,

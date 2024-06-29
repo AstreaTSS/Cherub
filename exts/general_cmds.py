@@ -37,6 +37,7 @@ class GeneralCMDS(utils.Extension):
             " but has no real use."
         ),
     )
+    @ipy.integration_types(guild=True, user=True)
     async def ping(self, ctx: utils.CherubSlashContext) -> None:
         """
         Pings the bot. Great way of finding out if the bot's working correctly, but has no real use.
@@ -66,6 +67,7 @@ class GeneralCMDS(utils.Extension):
         name="invite",
         description="Sends the link to invite the bot to your server.",
     )
+    @ipy.integration_types(guild=True, user=True)
     async def invite(self, ctx: utils.CherubSlashContext) -> None:
         embed = utils.make_embed(
             "If you want to invite me to your server, use the Invite Link below!",
@@ -82,6 +84,7 @@ class GeneralCMDS(utils.Extension):
     @ipy.slash_command(
         "support", description="Gives an invite link to the support server."
     )
+    @ipy.integration_types(guild=True, user=True)
     async def support(self, ctx: ipy.InteractionContext) -> None:
         embed = utils.make_embed(
             "If you need help with the bot, or just want to hang out, join the"
@@ -96,6 +99,7 @@ class GeneralCMDS(utils.Extension):
         await ctx.send(embeds=embed, components=button)
 
     @ipy.slash_command("about", description="Gives information about the bot.")
+    @ipy.integration_types(guild=True, user=True)
     async def about(self, ctx: utils.CherubSlashContext):
         msg_list = [
             (
