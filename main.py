@@ -32,12 +32,16 @@ intents = ipy.Intents.new(
     message_content=True,
 )
 mentions = ipy.AllowedMentions.all()
-activity = ipy.Activity.create(
-    name="in the ethereal realm", type=ipy.ActivityType.WATCHING
+activity = ipy.Activity(
+    name="Status",
+    type=ipy.ActivityType.CUSTOM,
+    state="Cherub is going offline on December 15th.",
+    emoji=ipy.PartialEmoji.from_str("🔴"),
 )
 bot = utils.CherubBase(
     intents=intents,
     allowed_mentions=mentions,
+    status=ipy.Status.DO_NOT_DISTURB,
     activity=activity,
     logger=logger,
     sync_interactions=False,
@@ -78,6 +82,11 @@ async def on_ready():
     await bot.owner.send(connect_msg)
 
     bot.init_load = False
+    await bot.change_presence(status=ipy.Status.DO_NOT_DISTURB, activity=activity)
+
+
+@ipy.listen("resume")
+async def on_resume_func() -> None:
     await bot.change_presence(activity=activity)
 
 

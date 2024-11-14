@@ -12,13 +12,6 @@ class GeneralCMDS(utils.Extension):
     def __init__(self, bot: utils.CherubBase):
         self.name = "General"
         self.bot: utils.CherubBase = bot
-        self.invite_link = ""
-
-        asyncio.create_task(self.when_ready())
-
-    async def when_ready(self) -> None:
-        await self.bot.wait_until_ready()
-        self.invite_link = f"https://discord.com/api/oauth2/authorize?client_id={self.bot.owner.id}&permissions=9312563227712&scope=bot%20applications.commands"
 
     def _get_commit_hash(self):
         return (
@@ -69,17 +62,10 @@ class GeneralCMDS(utils.Extension):
     )
     @ipy.integration_types(guild=True, user=True)
     async def invite(self, ctx: utils.CherubSlashContext) -> None:
-        embed = utils.make_embed(
-            "If you want to invite me to your server, use the Invite Link below!",
-            title="Invite Bot",
+        raise utils.CustomCheckFailure(
+            "This bot will be going offline on December 15th. No new servers will be"
+            " able to invite the bot."
         )
-        button = ipy.Button(
-            style=ipy.ButtonStyle.URL,
-            label="Invite Link",
-            url=self.invite_link,
-        )
-
-        await ctx.send(embeds=embed, components=button)
 
     @ipy.slash_command(
         "support", description="Gives an invite link to the support server."
@@ -102,6 +88,7 @@ class GeneralCMDS(utils.Extension):
     @ipy.integration_types(guild=True, user=True)
     async def about(self, ctx: utils.CherubSlashContext):
         msg_list = [
+            "**Cherub is going offline on December 15th.**",
             (
                 "I'm **Cherub**, an experimental utility bot. I'm the successor to"
                 " Seraphim, an old bot of my owner, and am meant to implement the best"
@@ -155,7 +142,6 @@ class GeneralCMDS(utils.Extension):
         )
 
         links = [
-            f"Invite Bot: [Link]({self.invite_link})",
             "Support Server: [Link](https://discord.gg/NSdetwGjpK)",
             "Source Code: [Link](https://github.com/AstreaTSS/Cherub)",
         ]

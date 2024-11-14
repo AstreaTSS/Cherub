@@ -1,3 +1,5 @@
+# This bot is going offline on December 15th, 2024.
+
 <p align="center">
   <img src="https://cdn.astrea.cc/CherubBanner.png" alt="Cherub's Banner" width="700"/>
 </p>
