@@ -87,7 +87,7 @@ async def on_ready():
 
 @ipy.listen("resume")
 async def on_resume_func() -> None:
-    await bot.change_presence(activity=activity)
+    await bot.change_presence(status=ipy.Status.DO_NOT_DISTURB, activity=activity)
 
 
 async def start():
